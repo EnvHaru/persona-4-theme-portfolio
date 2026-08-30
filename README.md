@@ -1,6 +1,6 @@
 # Persona-Style Portfolio — EnvHaru
 
-A Persona 5 menu-inspired portfolio, structured as Model–View–Controller.
+A Persona 4 menu-inspired portfolio, structured as Model–View–Controller.
 
 ## Structure
 
@@ -50,3 +50,5 @@ Push the whole folder to a GitHub repo, enable Pages
 ## Controls
 
 ↑ / ↓ select · Enter confirm · Esc back · click the name to go home
+
+-> thanks to github-omicron69 !!
