@@ -22,7 +22,7 @@ const Model = {
   featured: [
     {
       title: "MEDIA 99 NUSANTARA",
-      tag: "News Portal", color: "#e60012", live: true,
+      tag: "News Portal", color: "#ffe600", live: true,
       url: "https://media99nusantara.com/", cta: "Visit Website →",
       img: "assets/projects/media99.png",
       desc: "Modern digital news portal platform delivering real-time news, articles, and Nusantara information with fast and responsive content delivery.",
@@ -139,7 +139,7 @@ const Model = {
   projectImages: {},
 
   langColors: {
-    JavaScript: "#f1e05a", TypeScript: "#3178c6", Python: "#3572A5",
+    JavaScript: "#ffe600", TypeScript: "#3178c6", Python: "#3572A5",
     PHP: "#4F5D95", CSS: "#663399", HTML: "#e34c26", Go: "#00ADD8",
     Java: "#b07219", C: "#555", "C++": "#f34b7d", Vue: "#41b883",
   },

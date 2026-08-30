@@ -6,14 +6,78 @@ const Controller = {
 
   transitioning: false,
   audioUnlocked: false,
+  isMusicPlaying: false,
 
   init() {
     View.init();
     this.bindMenu();
     this.bindKeyboard();
     this.bindAudioUnlock();
+    this.bindMusicToggle();
     this.bindContactForm();
     this.bindComingSoon();
+  },
+
+  bindAudioUnlock() {
+    const unlock = () => {
+      if (!this.audioUnlocked) {
+        this.audioUnlocked = true;
+        this.startBGM();
+      }
+    };
+    addEventListener("pointerdown", unlock, { once: true, capture: true });
+    addEventListener("keydown", unlock, { once: true, capture: true });
+  },
+
+  startBGM() {
+    const bgm = View.els.bgMusic;
+    if (!bgm) return;
+    
+    bgm.volume = 0.35;
+    const promise = bgm.play();
+    if (promise !== undefined) {
+      promise
+        .then(() => {
+          this.isMusicPlaying = true;
+          View.updateMusicUI(true);
+        })
+        .catch(() => {
+          this.isMusicPlaying = false;
+          View.updateMusicUI(false);
+        });
+    }
+  },
+
+  bindMusicToggle() {
+    const btn = View.els.musicToggle;
+    const bgm = View.els.bgMusic;
+    if (!btn || !bgm) return;
+
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      this.playSelectSound();
+
+      if (this.isMusicPlaying) {
+        bgm.pause();
+        this.isMusicPlaying = false;
+        View.updateMusicUI(false);
+      } else {
+        bgm.volume = 0.35;
+        bgm.play()
+          .then(() => {
+            this.isMusicPlaying = true;
+            View.updateMusicUI(true);
+          })
+          .catch(() => {
+            this.isMusicPlaying = false;
+            View.updateMusicUI(false);
+          });
+      }
+    });
+  },
+
+  playSelectSound() {
+    if (this.audioUnlocked) View.playSelect();
   },
 
   bindComingSoon() {
@@ -23,7 +87,7 @@ const Controller = {
         const itemLabel = btn.dataset.comingSoon || "RESOURCE";
         View.triggerGlitch(
           btn,
-          `[!] COMING SOON<br><span style='font-size:0.8em;color:#fff;'>${itemLabel.toUpperCase()} UNDER CONSTRUCTION</span>`
+          `[!] COMING SOON<br><span style='font-size:0.8em;color:#ffe600;'>${itemLabel.toUpperCase()} UNDER CONSTRUCTION</span>`
         );
       });
     });
@@ -59,7 +123,7 @@ const Controller = {
         if (!res.ok) throw new Error(res.status);
         status.textContent = "Sent! I'll get back to you soon.";
         form.reset();
-        this.play();
+        this.playSelectSound();
       } catch {
         status.textContent = "Couldn't reach the relay, opening your email app instead…";
         const subject = encodeURIComponent(`Portfolio message from ${data.name}`);
@@ -71,11 +135,10 @@ const Controller = {
     });
   },
 
-  /* ---------- Navigation ---------- */
   goTo(screen) {
     if (this.transitioning || screen === Model.state.screen) return;
     this.transitioning = true;
-    this.play();
+    this.playSelectSound();
 
     View.wipe(
       () => {
@@ -91,12 +154,11 @@ const Controller = {
   select(index) {
     const n = View.els.menuItems.length;
     const next = (index + n) % n;
-    if (next !== Model.state.menuIndex) this.play();
+    if (next !== Model.state.menuIndex) this.playSelectSound();
     Model.state.menuIndex = next;
     View.setMenuSelection(next);
   },
 
-  /* ---------- Screen data loading ---------- */
   async loadProjects() {
     View.renderFeatured(Model.featured);
     if (Model.state.reposLoaded) return;
@@ -116,18 +178,6 @@ const Controller = {
     View.animateSkillBars();
   },
 
-  /* ---------- Sound ---------- */
-  play() {
-    if (this.audioUnlocked) View.playSelect();
-  },
-
-  bindAudioUnlock() {
-    const unlock = () => { this.audioUnlocked = true; };
-    addEventListener("pointerdown", unlock, { once: true, capture: true });
-    addEventListener("keydown", unlock, { once: true, capture: true });
-  },
-
-  /* ---------- Input bindings ---------- */
   bindMenu() {
     View.els.menuItems.forEach((item, i) => {
       item.addEventListener("mouseenter", () => this.select(i));
@@ -137,10 +187,13 @@ const Controller = {
     document.querySelectorAll("[data-back]").forEach(b =>
       b.addEventListener("click", () => this.goTo("home")));
 
-    document.getElementById("big-name").addEventListener("click", () => {
-      if (Model.state.screen !== "home") this.goTo("home");
-      else this.play();
-    });
+    const bigName = document.getElementById("big-name");
+    if (bigName) {
+      bigName.addEventListener("click", () => {
+        if (Model.state.screen !== "home") this.goTo("home");
+        else this.playSelectSound();
+      });
+    }
   },
 
   bindKeyboard() {

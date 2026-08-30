@@ -8,16 +8,18 @@ const View = {
   reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
 
   els: {
-    screens:    {},   // filled in init()
-    menuItems:  [],
-    wipe:       document.getElementById("wipe"),
-    featGrid:   document.getElementById("feat-grid"),
-    repoGrid:   document.getElementById("repo-grid"),
-    repoStatus: document.getElementById("repo-status"),
-    skillsBody: document.getElementById("skills-body"),
-    sfx:        document.getElementById("sfx-select"),
-    cursor:     document.getElementById("cursor"),
-    clock:      document.getElementById("clock"),
+    screens:     {},   // filled in init()
+    menuItems:   [],
+    wipe:        document.getElementById("wipe"),
+    featGrid:    document.getElementById("feat-grid"),
+    repoGrid:    document.getElementById("repo-grid"),
+    repoStatus:  document.getElementById("repo-status"),
+    skillsBody:  document.getElementById("skills-body"),
+    sfx:         document.getElementById("sfx-select"),
+    bgMusic:     document.getElementById("bg-music"),
+    musicToggle: document.getElementById("music-toggle"),
+    cursor:      document.getElementById("cursor"),
+    clock:       document.getElementById("clock"),
   },
 
   init() {
@@ -26,7 +28,9 @@ const View = {
     });
     this.els.menuItems = [...document.querySelectorAll(".menu-item")];
     document.querySelectorAll("[data-ransom]").forEach(el => this.ransomize(el));
-    this.els.sfx.volume = 0.45;
+    if (this.els.sfx) this.els.sfx.volume = 0.45;
+    if (this.els.bgMusic) this.els.bgMusic.volume = 0.35;
+    
     this.injectGlitchStyles();
     this.startClock();
     this.startParallax();
@@ -60,8 +64,8 @@ const View = {
       }
       .card-locked-shake {
         animation: cardShake 0.4s ease-in-out !important;
-        border-color: #e60012 !important;
-        box-shadow: 0 0 25px rgba(230, 0, 18, 0.8) !important;
+        border-color: #ffe600 !important;
+        box-shadow: 0 0 25px rgba(255, 230, 0, 0.8) !important;
       }
       .glitch-toast {
         position: fixed;
@@ -69,8 +73,8 @@ const View = {
         left: 50%;
         transform: translate(-50%, -50%) scale(0.8);
         background: #0d0d0d;
-        color: #e60012;
-        border: 3px solid #e60012;
+        color: #ffe600;
+        border: 3px solid #ffe600;
         padding: 16px 30px;
         font-family: monospace, sans-serif;
         font-weight: 900;
@@ -80,13 +84,40 @@ const View = {
         pointer-events: none;
         opacity: 0;
         transition: opacity 0.15s ease, transform 0.15s ease;
-        box-shadow: 8px 8px 0px #000, 0 0 30px rgba(230, 0, 18, 0.7);
+        box-shadow: 8px 8px 0px #000, 0 0 30px rgba(255, 230, 0, 0.7);
         text-transform: uppercase;
         text-align: center;
       }
       .glitch-toast.show {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
+      }
+      .hud-music-btn {
+        background: #0b0b0d;
+        color: #ffe600;
+        border: 1px solid #ffe600;
+        padding: 4px 10px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transform: skewX(-8deg);
+        transition: background .15s, color .15s, transform .15s;
+      }
+      .hud-music-btn:hover {
+        background: #ffe600;
+        color: #0b0b0d;
+        transform: skewX(-8deg) scale(1.05);
+      }
+      .hud-music-btn.muted {
+        opacity: 0.65;
+        border-color: #888;
+        color: #ccc;
       }
     `;
     document.head.appendChild(style);
@@ -121,7 +152,6 @@ const View = {
     return (h ^ h >>> 9) >>> 0;
   },
 
-  /* ---------- Ransom-note lettering ---------- */
   ransomize(el) {
     const text = el.dataset.ransom || el.textContent;
     el.textContent = "";
@@ -144,12 +174,13 @@ const View = {
     });
   },
 
-  /* ---------- Screens & menu ---------- */
   showScreen(name) {
     const s = this.els.screens;
     Object.values(s).forEach(sc => sc.classList.remove("active"));
-    s[name].classList.add("active");
-    s[name].scrollTop = 0;
+    if (s[name]) {
+      s[name].classList.add("active");
+      s[name].scrollTop = 0;
+    }
     document.body.dataset.screen = name;
   },
 
@@ -166,16 +197,35 @@ const View = {
     setTimeout(done, 720);
   },
 
-  /* ---------- Sound ---------- */
   playSelect() {
     try {
-      this.els.sfx.currentTime = 0;
-      const p = this.els.sfx.play();
-      if (p && p.catch) p.catch(() => {});
+      if (this.els.sfx) {
+        this.els.sfx.currentTime = 0;
+        const p = this.els.sfx.play();
+        if (p && p.catch) p.catch(() => {});
+      }
     } catch {}
   },
 
-  /* ---------- Project cards ---------- */
+  updateMusicUI(isPlaying) {
+    if (!this.els.musicToggle) return;
+    const iconPlaying = this.els.musicToggle.querySelector(".icon-playing");
+    const iconMuted = this.els.musicToggle.querySelector(".icon-muted");
+    const statusText = this.els.musicToggle.querySelector(".music-status-text");
+
+    if (isPlaying) {
+      if (iconPlaying) iconPlaying.style.display = "inline-block";
+      if (iconMuted) iconMuted.style.display = "none";
+      if (statusText) statusText.textContent = "BGM ON";
+      this.els.musicToggle.classList.remove("muted");
+    } else {
+      if (iconPlaying) iconPlaying.style.display = "none";
+      if (iconMuted) iconMuted.style.display = "inline-block";
+      if (statusText) statusText.textContent = "BGM OFF";
+      this.els.musicToggle.classList.add("muted");
+    }
+  },
+
   cardThumb(src) {
     return `<div class="thumb"><img src="${src}" alt="" loading="lazy"
       onerror="this.closest('.thumb').remove()"></div>`;
@@ -225,7 +275,7 @@ const View = {
       a.href = r.html_url; a.target = "_blank"; a.rel = "noopener";
       a.style.setProperty("--tilt", ((this.hash(r.name) % 5) - 2) * 0.8 + "deg");
       a.style.setProperty("--d", i * 70 + "ms");
-      a.style.setProperty("--lc", model.langColors[r.language] || "#e60012");
+      a.style.setProperty("--lc", model.langColors[r.language] || "#ffe600");
       const pretty = r.name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
       const img = model.projectImages[r.name] || `assets/projects/${r.name}.png`;
       a.innerHTML = `
@@ -241,7 +291,6 @@ const View = {
     });
   },
 
-  /* ---------- Skills ---------- */
   renderSkills(groups) {
     groups.forEach(g => {
       const div = document.createElement("div");
@@ -268,11 +317,12 @@ const View = {
     }));
   },
 
-  /* ---------- Ambient: clock, parallax, animated cursor ---------- */
   startClock() {
     setInterval(() => {
-      this.els.clock.textContent =
-        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " · WIB";
+      if (this.els.clock) {
+        this.els.clock.textContent =
+          new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + " · WIB";
+      }
     }, 1000);
   },
 
@@ -288,8 +338,8 @@ const View = {
     }, { passive: true });
     const loop = () => {
       cx += (tx - cx) * 0.06; cy += (ty - cy) * 0.06;
-      stripes.style.transform = `translate(${cx * 22}px, ${cy * 14}px)`;
-      halftone.style.transform = `translate(${cx * -34}px, ${cy * -22}px)`;
+      if (stripes) stripes.style.transform = `translate(${cx * 22}px, ${cy * 14}px)`;
+      if (halftone) halftone.style.transform = `translate(${cx * -34}px, ${cy * -22}px)`;
       arts.forEach(a => {
         if (a.isConnected)
           a.style.transform = `translate(${cx * 14}px, ${cy * 9}px) scale(1.04)`;
@@ -302,8 +352,9 @@ const View = {
   startCursor() {
     if (!matchMedia("(pointer:fine)").matches || this.reducedMotion) return;
     const cur = this.els.cursor;
+    if (!cur) return;
     document.body.classList.add("cursor-on");
-    let x = -100, y = -100, frame = 0, last = 0, visible = false;
+    let x = -100, y = -100, visible = false;
 
     addEventListener("mousemove", e => {
       x = e.clientX; y = e.clientY;
@@ -318,12 +369,8 @@ const View = {
       cur.style.display = "none"; visible = false;
     });
 
-    const tick = ts => {
-      if (ts - last >= 50) {
-        frame = (frame + 1) % 30; last = ts;
-        cur.style.backgroundPosition = -frame * 48 + "px 0";
-      }
-      cur.style.transform = `translate(${x}px, ${y}px)`;
+    const tick = () => {
+      cur.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);

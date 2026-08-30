@@ -1,4 +1,4 @@
-# Persona-Style Portfolio — Angga Indrawan
+# Persona-Style Portfolio — EnvHaru
 
 A Persona 5 menu-inspired portfolio, structured as Model–View–Controller.
 
